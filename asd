@@ -1,3 +1,0 @@
-��YOSH
-
-nyanpoko
