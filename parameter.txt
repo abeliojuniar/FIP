@@ -1,0 +1,15 @@
+###########################
+# File name : parameter.txt
+# Description : This file to set parameter data of FIP. 
+#               Please insert required parameters
+# Author : Abelio
+###########################
+
+# beta = Initial fare for parcel
+beta = 15000
+# gamma2 = Parcel fare per kilometer
+gamma2 = 12000
+# gamma3 = Cost per kilometer for delivering request (fuel, toll, etc.)
+gamma3 = 5000
+# gamma4 = Discount factor / penalty for exceeding direct delivery time of passangers.
+gamma4 = 4000
