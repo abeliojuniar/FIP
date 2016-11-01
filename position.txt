@@ -1,28 +1,26 @@
-# m = jumlah barang
+###################
+# absK = jumlah taxi
 # n = jumlah penumpang
-# absK = jumlah mobil yang beroperasi
-x = 0
-y = 1
-
-# # JUMLAH MOBIL YANG BEROPERASI
+# m = jumlah barang
+###################
 absK = 1
-# # INITIAL CAR POSITION
-# car = [[0 for i in range(absK)] for i in range(8)]
-# car[0] = [0, 0]
+n = 2
+m = 1
 
-# # JUMLAH PENUMPANG
-# n = 2
-# # PASSENGERS LOCATION
-# passenger = [[0 for i in range(n)] for i in range(8)]
-# passenger[0] = [20,20]
-# passenger[1] = [-5,3]
-# #passenger[2] = [-10,-15]
-# #passenger[3] = [0,-10]
-# #passenger[4] = [-25,5]
-# #passenger[5] = [13,10]
+##################
+# PRE-DEFINITION MATRIX
+##################
+taxi = [0 for i in range(absK)]
+pas = [0 for i in range(n)]
+fre = [0 for i in range(m)]
 
-# # JUMLAH BARANG
-# m = 1
-# # FREIGHTS LOCATION
-# freight = [[0 for i in range(m)] for i in range(8)]
-# freight[0] = [5,15]
+##################
+# DEFINE LOCATION
+##################
+taxi[0] = [0,0]
+##################
+pas[0] = [[15,10], [0,25]]
+pas[1] = [[-3,12], [-4.3,-12]]
+##################
+fre[0] = [[3,20], [10,22]]
+
