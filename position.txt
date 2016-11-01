@@ -1,0 +1,28 @@
+# m = jumlah barang
+# n = jumlah penumpang
+# absK = jumlah mobil yang beroperasi
+x = 0
+y = 1
+
+# # JUMLAH MOBIL YANG BEROPERASI
+absK = 1
+# # INITIAL CAR POSITION
+# car = [[0 for i in range(absK)] for i in range(8)]
+# car[0] = [0, 0]
+
+# # JUMLAH PENUMPANG
+# n = 2
+# # PASSENGERS LOCATION
+# passenger = [[0 for i in range(n)] for i in range(8)]
+# passenger[0] = [20,20]
+# passenger[1] = [-5,3]
+# #passenger[2] = [-10,-15]
+# #passenger[3] = [0,-10]
+# #passenger[4] = [-25,5]
+# #passenger[5] = [13,10]
+
+# # JUMLAH BARANG
+# m = 1
+# # FREIGHTS LOCATION
+# freight = [[0 for i in range(m)] for i in range(8)]
+# freight[0] = [5,15]

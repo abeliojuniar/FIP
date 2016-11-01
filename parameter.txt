@@ -6,10 +6,10 @@
 ###########################
 
 # beta = Initial fare for parcel
-beta = 15000
+beta = 35000
 # gamma2 = Parcel fare per kilometer
-gamma2 = 12000
+gamma2 = 9000
 # gamma3 = Cost per kilometer for delivering request (fuel, toll, etc.)
-gamma3 = 5000
+gamma3 = 8000
 # gamma4 = Discount factor / penalty for exceeding direct delivery time of passangers.
-gamma4 = 4000
+gamma4 = 35000
