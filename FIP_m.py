@@ -101,36 +101,29 @@ def setVariable(column):
 	
 def calculateDistanceBetween(K):
 	for i in range(len(K)):
-		print('--')
+		#print('--')
 		for j in range(len(K[i].Vpo)):
 			K[i].distanceBetween.append(distForm(K[i].Vpo[j][0],K[i].Vpo[j][1],K[i].Vpd[j][0],K[i].Vpd[j][1]))
 			
 def plotInitialRoute(K):
-	routeX=[[] for i in range(len(K))]
-	routeY=[[] for i in range(len(K))]
-	orX=[]
-	orY=[]
-	desX=[]
-	desY=[]
-	startX=[]
-	startY=[]
+	global route
+	route=[[] for i in range(len(K))]
 	for i in range(len(K)):
 		for j in range(len(K[i].Vpo)):
-			routeX[i].append(K[i].Vpo[j][0])
-			routeY[i].append(K[i].Vpo[j][1])
-			routeX[i].append(K[i].Vpd[j][0])
-			routeY[i].append(K[i].Vpd[j][1])
-			orX.append(K[i].Vpo[j][0])
-			orY.append(K[i].Vpo[j][1])
-			desX.append(K[i].Vpd[j][0])
-			desY.append(K[i].Vpd[j][1])
-	#ppo, = plt.plot(xpo,ypo,'ro--')
-	print(routeX)
-	line0, = plt.plot(routeX[0],routeY[0],'g-')
-	line1, = plt.plot(routeX[1],routeY[1],'m-')
-	oriPas, = plt.plot(orX,orY,'bo')
-	desPas, = plt.plot(desX,desY,'ro')
-
+			route[i].append([K[i].Vpo[j][0],K[i].Vpo[j][1]])
+			route[i].append([K[i].Vpd[j][0],K[i].Vpd[j][1]])
+	for h in range(len(K)):
+		line, = plt.plot([route[h][i][0] for i in range(len(route[h]))],[route[h][i][1] for i in range(len(route[h]))],'g-')
+		oriPas, = plt.plot([route[h][i][0] for i in range(0,len(route[h]),2)],[route[h][i][1] for i in range(0,len(route[h]),2)],'bo')
+		desPas, = plt.plot([route[h][i][0] for i in range(1,len(route[h]),2)],[route[h][i][1] for i in range(1,len(route[h]),2)],'ro')
+		
+# def calcSingleProfit(d_iid,d_ij,):
+	
+		
+# def FIP(K):
+	# for i in range(len(K[0].Vfo)):
+		# print(K[0].Vfo[i])
+	
 def plotFreight(K):
 	Vfo_x=[]
 	Vfo_y=[]
@@ -152,6 +145,7 @@ setVariable(column)
 #print(column[2][7])
 plotInitialRoute(K)
 plotFreight(K)
+#FIP(K)
 #plotPas()
 plt.axis([-25,25,-25,25])
 plt.grid(True)
