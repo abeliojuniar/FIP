@@ -14,14 +14,19 @@ class setCar(object):
 	Vfd=[]
 	startTime=[]
 	finishTime=[]
+	beta=None
+	gamma2=None
+	gamma3=None
+	gamma4=None
 	def __init__(self):
-		self.start=None
+		self.taxiNo=None
 		self.V=[]
 		self.Vpo=[]
 		self.Vpd=[]
 		self.pickUpTime=[]
 		self.timeWindow=[]
 		self.actualArrival=[]
+		self.distanceBetween=[]
 
 class timeFormat(object):
 	def __init__(self):
@@ -67,29 +72,42 @@ def setVariable(column):
 	K=[setCar() for i in range(int(column[2][4]))]
 	foundCar=-1
 	Vpo=[];Vpd=[];Vfo=[];Vfd=[]
-	
+	K[0].beta=int(column[1][1])
+	K[0].gamma2=int(column[2][1])
+	K[0].gamma3=int(column[3][1])
+	K[0].gamma4=int(column[4][1])
 	K[0].startTime=column[1][7].split(':')
 	K[0].finishTime=column[2][7].split(':')
+
 	for i in range(8,len(column)):
-		if(column[i][0]=='Car'):
+		if(column[i][0]=='Start Route'):
 			foundCar=foundCar+1
-			K[foundCar].start = [float(column[i][1]),float(column[i][2])]
+			K[foundCar].taxiNo = foundCar+1
 		elif(column[i][0]=='Passenger'):
 			K[foundCar].Vpo.append([float(column[i][1]),float(column[i][2])])
 			K[foundCar].Vpd.append([float(column[i][3]),float(column[i][4])])
 		elif(column[i][0]=='Freight'):
 			K[foundCar].Vfo.append([float(column[i][1]),float(column[i][2])])
 			K[foundCar].Vfd.append([float(column[i][3]),float(column[i][4])])
-
-#def calculateDistance(K):
-		
+			
+	for i in range(len(K)):	
+		K[i].pickUpTime=[timeFormat() for j in range(len(K[i].Vpo))]
+		K[i].timeWindow=[timeFormat() for j in range(len(K[i].Vpo))]
+		K[i].actualArrival=[timeFormat() for j in range(len(K[i].Vpo))]	
+		for j in range(len(K[i].Vpo)):
+			K[i].pickUpTime[j].hour=int(K[0].startTime[0])
+			K[i].pickUpTime[j].minute=int(K[0].startTime[1])
+	calculateDistanceBetween(K)
 	
-#def calculateTimeWindow(K):
-
+def calculateDistanceBetween(K):
+	for i in range(len(K)):
+		print('--')
+		for j in range(len(K[i].Vpo)):
+			K[i].distanceBetween.append(distForm(K[i].Vpo[j][0],K[i].Vpo[j][1],K[i].Vpd[j][0],K[i].Vpd[j][1]))
 			
 def plotInitialRoute(K):
-	routeX=[0 for i in range(len(K))]
-	routeY=[0 for i in range(len(K))]
+	routeX=[[] for i in range(len(K))]
+	routeY=[[] for i in range(len(K))]
 	orX=[]
 	orY=[]
 	desX=[]
@@ -97,10 +115,6 @@ def plotInitialRoute(K):
 	startX=[]
 	startY=[]
 	for i in range(len(K)):
-		routeX[i]=[K[i].start[0]]
-		routeY[i]=[K[i].start[1]]
-		startX.append(K[i].start[0])
-		startY.append(K[i].start[1])
 		for j in range(len(K[i].Vpo)):
 			routeX[i].append(K[i].Vpo[j][0])
 			routeY[i].append(K[i].Vpo[j][1])
@@ -111,11 +125,11 @@ def plotInitialRoute(K):
 			desX.append(K[i].Vpd[j][0])
 			desY.append(K[i].Vpd[j][1])
 	#ppo, = plt.plot(xpo,ypo,'ro--')
+	print(routeX)
 	line0, = plt.plot(routeX[0],routeY[0],'g-')
-	#line1, = plt.plot(routeX[1],routeY[1],'m-')
+	line1, = plt.plot(routeX[1],routeY[1],'m-')
 	oriPas, = plt.plot(orX,orY,'bo')
 	desPas, = plt.plot(desX,desY,'ro')
-	start, = plt.plot(startX,startY,'ko')
 
 def plotFreight(K):
 	Vfo_x=[]
@@ -134,8 +148,8 @@ readCSV('./data_small.csv')
 fig, ax = plt.subplots()
 plt.axis([-25,25,-25,25])
 setVariable(column)
-print([int(column[1][7].split(':')[0]),int(column[1][7].split(':')[1])])
-print(column[2][7])
+#print([int(column[1][7].split(':')[0]),int(column[1][7].split(':')[1])])
+#print(column[2][7])
 plotInitialRoute(K)
 plotFreight(K)
 #plotPas()
