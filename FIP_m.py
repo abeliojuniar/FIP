@@ -12,6 +12,7 @@ from matplotlib.widgets import Slider, Button, RadioButtons
 class setCar(object):
 	Vfo=[]
 	Vfd=[]
+	freightPickUp=[]
 	startTime=[]
 	finishTime=[]
 	beta=None
@@ -20,14 +21,15 @@ class setCar(object):
 	gamma4=None
 	def __init__(self):
 		self.taxiNo=None
-		self.route=[]
+		self.initialRoute=[]
+		self.distanceRoute=[]
 		self.V=[]
 		self.Vpo=[]
 		self.Vpd=[]
 		self.pickUpTime=[]
 		self.timeWindow=[]
 		self.actualArrival=[]
-		self.distanceBetween=[]
+		self.distOrDes=[]
 
 class timeFormat(object):
 	def __init__(self):
@@ -90,6 +92,7 @@ def setVariable(column):
 		elif(column[i][0]=='Freight'):
 			K[foundCar].Vfo.append([float(column[i][1]),float(column[i][2])])
 			K[foundCar].Vfd.append([float(column[i][3]),float(column[i][4])])
+			K[foundCar].freightPickUp.append(0)
 			
 	for i in range(len(K)):	
 		K[i].pickUpTime=[timeFormat() for j in range(len(K[i].Vpo))]
@@ -104,30 +107,43 @@ def calculateDistanceBetween(K):
 	for i in range(len(K)):
 		#print('--')
 		for j in range(len(K[i].Vpo)):
-			K[i].distanceBetween.append(distForm(K[i].Vpo[j],K[i].Vpd[j]))
+			K[i].distOrDes.append(distForm(K[i].Vpo[j],K[i].Vpd[j]))
 			
 def plotInitialRoute(K):
 	for i in range(len(K)):
 		for j in range(len(K[i].Vpo)):
-			K[i].route.append([K[i].Vpo[j][0],K[i].Vpo[j][1]])
-			K[i].route.append([K[i].Vpd[j][0],K[i].Vpd[j][1]])
+			K[i].initialRoute.append([K[i].Vpo[j][0],K[i].Vpo[j][1]])
+			K[i].initialRoute.append([K[i].Vpd[j][0],K[i].Vpd[j][1]])
 	for h in range(len(K)):
-		line, = plt.plot([K[h].route[i][0] for i in range(len(K[h].route))],[K[h].route[i][1] for i in range(len(K[h].route))],'g-')
-		oriPas, = plt.plot([K[h].route[i][0] for i in range(0,len(K[h].route),2)],[K[h].route[i][1] for i in range(0,len(K[h].route),2)],'bo')
-		desPas, = plt.plot([K[h].route[i][0] for i in range(1,len(K[h].route),2)],[K[h].route[i][1] for i in range(1,len(K[h].route),2)],'ro')
+		line, = plt.plot([K[h].initialRoute[i][0] for i in range(len(K[h].initialRoute))],[K[h].initialRoute[i][1] for i in range(len(K[h].initialRoute))],'g-')
+		oriPas, = plt.plot([K[h].initialRoute[i][0] for i in range(0,len(K[h].initialRoute),2)],[K[h].initialRoute[i][1] for i in range(0,len(K[h].initialRoute),2)],'bo')
+		desPas, = plt.plot([K[h].initialRoute[i][0] for i in range(1,len(K[h].initialRoute),2)],[K[h].initialRoute[i][1] for i in range(1,len(K[h].initialRoute),2)],'ro')
 
 def FIP(K):
 	reroute=[0 for i in range(len(K))]
 	for h in range(len(K)):
-		reroute[h]=[[0 for i in range(len(K[h].Vfo))] for j in range(len(K[h].route))]
+		reroute[h]=[[0 for i in range(len(K[h].Vfo))] for j in range(len(K[h].initialRoute))]
 	for h in range(len(K)):
-		for i in range(0,len(K[h].route),2):
+		for i in range(0,len(K[h].initialRoute),1):
+			if(i+1<len(K[h].initialRoute)):
+				K[h].distanceRoute.append(distForm(K[h].initialRoute[i],K[h].initialRoute[i+1]))
 			for j in range(len(K[h].Vfo)):
-				reroute[h][i][j]=distForm(K[h].route[i],K[h].Vfo[j])
-				reroute[h][i+1][j]=distForm(K[h].route[i+1],K[h].Vfo[j])
-				#print(distForm(K[h].route[i/2],K[h].route[i/2+1]))
-				print(i/2,':',i/2+1)
-				print(i/2+1,':',i/2+2)
+				reroute[h][i][j]=[distForm(K[h].initialRoute[i],K[h].Vfo[j])]
+				reroute[h][i][j].append(distForm(K[h].initialRoute[i],K[h].Vfd[j]))
+				#print(i,';',len(K[h].initialRoute))
+				if((i+1)<len(K[h].initialRoute)):
+					reroute[h][i+1][j]=[distForm(K[h].initialRoute[i+1],K[h].Vfo[j])]
+					reroute[h][i+1][j].append(distForm(K[h].initialRoute[i+1],K[h].Vfd[j]))
+					#print(reroute[h][i+1][j][0])
+					if(reroute[h][i][j][0]+reroute[h][i+1][j][0]<=K[h].distanceRoute[i]*2):
+						print('pickup',h,';',i,';',j)
+						for k in range(i+1,len(K[h].initialRoute)):
+							#print(reroute[h][k][j
+							if(k+1<len(K[h].initialRoute)):
+								#if(reroute[h][k][j][1]+reroute[h][k+1][j][1]<=K[h].distanceRoute[k]*2):
+								print('deliver',h,';',k,';',j)
+							#print('--')
+			#print(reroute[h][i])
 
 
 def plotFreight(K):
