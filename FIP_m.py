@@ -20,6 +20,7 @@ class setCar(object):
 	gamma4=None
 	def __init__(self):
 		self.taxiNo=None
+		self.route=[]
 		self.V=[]
 		self.Vpo=[]
 		self.Vpd=[]
@@ -49,8 +50,8 @@ class timeFormat(object):
 			self.minute=int(round(mat.modf(t)[0]*60)+self.minute)
 	
 # Calculate distance formula
-def distForm(x1,y1,x2,y2):
-	return mat.sqrt(pow((x2-x1),2) + pow((y2-y1),2))
+def distForm(coord0,coord1):
+	return mat.sqrt(pow((coord1[0]-coord0[0]),2) + pow((coord1[1]-coord0[1]),2))
 
 def readCSV(filename):
 	import csv
@@ -103,27 +104,32 @@ def calculateDistanceBetween(K):
 	for i in range(len(K)):
 		#print('--')
 		for j in range(len(K[i].Vpo)):
-			K[i].distanceBetween.append(distForm(K[i].Vpo[j][0],K[i].Vpo[j][1],K[i].Vpd[j][0],K[i].Vpd[j][1]))
+			K[i].distanceBetween.append(distForm(K[i].Vpo[j],K[i].Vpd[j]))
 			
 def plotInitialRoute(K):
-	global route
-	route=[[] for i in range(len(K))]
 	for i in range(len(K)):
 		for j in range(len(K[i].Vpo)):
-			route[i].append([K[i].Vpo[j][0],K[i].Vpo[j][1]])
-			route[i].append([K[i].Vpd[j][0],K[i].Vpd[j][1]])
+			K[i].route.append([K[i].Vpo[j][0],K[i].Vpo[j][1]])
+			K[i].route.append([K[i].Vpd[j][0],K[i].Vpd[j][1]])
 	for h in range(len(K)):
-		line, = plt.plot([route[h][i][0] for i in range(len(route[h]))],[route[h][i][1] for i in range(len(route[h]))],'g-')
-		oriPas, = plt.plot([route[h][i][0] for i in range(0,len(route[h]),2)],[route[h][i][1] for i in range(0,len(route[h]),2)],'bo')
-		desPas, = plt.plot([route[h][i][0] for i in range(1,len(route[h]),2)],[route[h][i][1] for i in range(1,len(route[h]),2)],'ro')
-		
-# def calcSingleProfit(d_iid,d_ij,):
-	
-		
-# def FIP(K):
-	# for i in range(len(K[0].Vfo)):
-		# print(K[0].Vfo[i])
-	
+		line, = plt.plot([K[h].route[i][0] for i in range(len(K[h].route))],[K[h].route[i][1] for i in range(len(K[h].route))],'g-')
+		oriPas, = plt.plot([K[h].route[i][0] for i in range(0,len(K[h].route),2)],[K[h].route[i][1] for i in range(0,len(K[h].route),2)],'bo')
+		desPas, = plt.plot([K[h].route[i][0] for i in range(1,len(K[h].route),2)],[K[h].route[i][1] for i in range(1,len(K[h].route),2)],'ro')
+
+def FIP(K):
+	reroute=[0 for i in range(len(K))]
+	for h in range(len(K)):
+		reroute[h]=[[0 for i in range(len(K[h].Vfo))] for j in range(len(K[h].route))]
+	for h in range(len(K)):
+		for i in range(0,len(K[h].route),2):
+			for j in range(len(K[h].Vfo)):
+				reroute[h][i][j]=distForm(K[h].route[i],K[h].Vfo[j])
+				reroute[h][i+1][j]=distForm(K[h].route[i+1],K[h].Vfo[j])
+				#print(distForm(K[h].route[i/2],K[h].route[i/2+1]))
+				print(i/2,':',i/2+1)
+				print(i/2+1,':',i/2+2)
+
+
 def plotFreight(K):
 	Vfo_x=[]
 	Vfo_y=[]
@@ -137,15 +143,16 @@ def plotFreight(K):
 	oriFre, = plt.plot(Vfo_x,Vfo_y,'bv')
 	desFre, = plt.plot(Vfd_x,Vfd_y,'rv')
 	
-readCSV('./data_small.csv')
+readCSV('./data_small2.csv')
 fig, ax = plt.subplots()
 plt.axis([-25,25,-25,25])
 setVariable(column)
 #print([int(column[1][7].split(':')[0]),int(column[1][7].split(':')[1])])
 #print(column[2][7])
+calculateDistanceBetween(K)
 plotInitialRoute(K)
 plotFreight(K)
-#FIP(K)
+FIP(K)
 #plotPas()
 plt.axis([-25,25,-25,25])
 plt.grid(True)
