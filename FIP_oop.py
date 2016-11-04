@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider, Button, RadioButtons
 
-
 class TIMEFORMAT(object):
     def __init__(self):
         self.hour = None
@@ -66,6 +65,8 @@ class FREIGHT(object):
         self.dropWindow = TIMEFORMAT()
         self.actualPickUp = TIMEFORMAT()
         self.actualDrop = TIMEFORMAT()
+        self.pickUpToPoint=[]
+        self.dropToPoint=[]
         self.isPickedUp = 0
 
     def addPickUpCoordinate(self, x, y):
@@ -94,6 +95,7 @@ class ROUTE(object):
         self.points = COORDINATE(None,None)
         self.passenger = PASSENGER()
         self.freight = FREIGHT()
+        self.distanceBetween = []
 
     def addPoint(self, x, y):
         if(isinstance(self.points,list)):
@@ -113,6 +115,9 @@ class ROUTE(object):
         else:
             self.freight=[FREIGHT()]
 
+    def calculateDistanceBetween(self):
+        for i in range(len(self.points)-1):
+            self.distanceBetween.append(distForm(self.points[i].coord,self.points[i+1].coord))
 
 class CAR(object):
     freight = FREIGHT()
@@ -188,9 +193,30 @@ def plotInitialRoute():
         oriPas, = plt.plot([K[i].initialRoute.points[j].x for j in range(1, len(K[i].initialRoute.points),2)], \
                            [K[i].initialRoute.points[j].y for j in range(1, len(K[i].initialRoute.points),2)], 'ro')
 
-#def FIP():
+def plotFreight():
+    oriFre,=plt.plot([FrList.list[i].pickUpCoordinate.x for i in range(totalFreight)], \
+                     [FrList.list[i].pickUpCoordinate.y for i in range(totalFreight)],'bv')
+    desFre, = plt.plot([FrList.list[i].dropCoordinate.x for i in range(totalFreight)], \
+                       [FrList.list[i].dropCoordinate.y for i in range(totalFreight)], 'rv')
 
+def distForm(coord0,coord1):
+    return mat.sqrt(pow((coord1[0] - coord0[0]), 2) + pow((coord1[1] - coord0[1]), 2))
 
+def calculateFreightToPoint():
+    #print(FrList.list[0].pickUpCoordinate)
+    for list in FrList.list:
+        list.pickUpToPoint=[[] for i in range(totalRoute)]
+        list.dropToPoint=[[] for i in range(totalRoute)]
+    for freight in FrList.list:
+        for i in range(totalRoute):
+            for points in K[i].initialRoute.points:
+                freight.pickUpToPoint[i].append(distForm(freight.pickUpCoordinate.coord,points.coord))
+                freight.dropToPoint[i].append(distForm(freight.dropCoordinate.coord,points.coord))
+                #print('barang:',freight.pickUpCoordinate,' terhadap route: ',i,';',points)
+
+def calculateDistanceBetween():
+    for i in range(totalRoute):
+        K[i].initialRoute.calculateDistanceBetween()
 
 readCSV('./data_small2.csv')
 readParameter()
@@ -200,4 +226,7 @@ assignPassenger()
 fig, ax = plt.subplots()
 plt.axis([-25,25,-25,25])
 plotInitialRoute()
+plotFreight()
+calculateFreightToPoint()
+calculateDistanceBetween()
 plt.show()
