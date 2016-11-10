@@ -2,6 +2,7 @@ import math as mat
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider, Button, RadioButtons
+import itertools
 
 class TIMEFORMAT(object):
     def __init__(self):
@@ -179,8 +180,8 @@ def assignPassenger():
             K[foundRoute].totalPassenger=foundPas+1
         elif (column[i][0] == 'Freight'):
             FrList.addFreight()
-            FrList.list[foundRoute].addPickUpCoordinate(float(column[i][1]), float(column[i][2]))
-            FrList.list[foundRoute].addDropCoordinate(float(column[i][3]), float(column[i][4]))
+            FrList.list[-1].addPickUpCoordinate(float(column[i][1]), float(column[i][2]))
+            FrList.list[-1].addDropCoordinate(float(column[i][3]), float(column[i][4]))
 
 def plotInitialRoute():
     for i in range(totalRoute):
@@ -212,12 +213,75 @@ def calculateFreightToPoint():
             for points in K[i].initialRoute.points:
                 freight.pickUpToPoint[i].append(distForm(freight.pickUpCoordinate.coord,points.coord))
                 freight.dropToPoint[i].append(distForm(freight.dropCoordinate.coord,points.coord))
-                #print('barang:',freight.pickUpCoordinate,' terhadap route: ',i,';',points)
 
 def calculateDistanceBetween():
     for i in range(totalRoute):
         K[i].initialRoute.calculateDistanceBetween()
+        #print(list(itertools.permutations([1,2,3])))
 
+def listAllPossiblePickUp(routeNo, point):
+    possibility=[]
+    for freight in FrList.list:
+        if(point<len(K[routeNo].initialRoute.points)-1):
+            reroutePickUp=freight.pickUpToPoint[routeNo][point]+freight.pickUpToPoint[routeNo][point+1]
+            if (reroutePickUp<2*K[routeNo].initialRoute.distanceBetween[point]):
+                possibility.append(freight.pickUpCoordinate)
+    return possibility
+
+def listAllPossibleDrop(routeNo, point):
+    possibility=[]
+    for freight in FrList.list:
+        if(point<len(K[routeNo].initialRoute.points)-1):
+            rerouteDrop=freight.dropToPoint[routeNo][point]+freight.dropToPoint[routeNo][point+1]
+            if (rerouteDrop < 2*K[routeNo].initialRoute.distanceBetween[point]):
+                possibility.append(freight.dropCoordinate)
+    return possibility
+
+def isDropPossible(routeNo, point, pickUpPoint):
+    possibility=False
+    if(point<len(K[routeNo].initialRoute.points)-1):
+        for freight in FrList.list:
+            if (freight.pickUpCoordinate==pickUpPoint):
+                dropPoint = freight.dropCoordinate
+                rerouteDrop = freight.dropToPoint[routeNo][point]+freight.dropToPoint[routeNo][point+1]
+                if(rerouteDrop<2*K[routeNo].initialRoute.distanceBetween[point]):
+                    possibility=True
+    else:
+        possibility=True
+    return possibility
+
+def listAllPossiblePickUpDrop():
+    possiblePickUp=[]
+    possibleDrop=[]
+    for i in range(totalRoute):
+#        K[i].addPossibleRoute()
+        K[i].possibleRoute
+        for j in range(len(K[i].initialRoute.points)):
+            #freightList = FrList.list.pickUpCoordinate
+            pickUpList = listAllPossiblePickUp(i,j)
+            dropList = listAllPossibleDrop(i,j)
+            print(pickUpList)
+            print(dropList)
+            print('--')
+            #while(len(pickUpList)!=0):
+            #    print(pickUpList[0])
+            #    pickUpList.pop(0)
+
+            #print('route:',i,' point:',j)
+            #for freight in FrList.list:
+            #    if(j<len(K[i].initialRoute.points)-1):
+            #        reroutePickUp= freight.pickUpToPoint[i][j]+freight.pickUpToPoint[i][j+1]
+            #        if(reroutePickUp < 2*K[i].initialRoute.distanceBetween[j]):
+            #            possiblePickUp.append([i,j,freight.pickUpCoordinate])
+            #            print('pickup:',freight.pickUpCoordinate)
+            #        rerouteDrop = freight.dropToPoint[i][j] + freight.dropToPoint[i][j + 1]
+            #        if (rerouteDrop < 2 * K[i].initialRoute.distanceBetween[j]):
+            #            possibleDrop.append([i,j,freight.dropCoordinate])
+            #    else:
+            #        possibleDrop.append([i, j, freight.dropCoordinate])
+    print(possiblePickUp)
+    print('-')
+    print(possibleDrop)
 readCSV('./data_small2.csv')
 readParameter()
 K = [CAR() for i in range(totalRoute)]
@@ -229,4 +293,5 @@ plotInitialRoute()
 plotFreight()
 calculateFreightToPoint()
 calculateDistanceBetween()
+listAllPossiblePickUpDrop()
 plt.show()
