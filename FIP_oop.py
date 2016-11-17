@@ -221,21 +221,49 @@ def calculateDistanceBetween():
 
 def listAllPossiblePickUp(routeNo, point):
     possibility=[]
+    i=-1
     for freight in FrList.list:
+        i+=1
+        Btemp = 'B'+str(i)
         if(point<len(K[routeNo].initialRoute.points)-1):
             reroutePickUp=freight.pickUpToPoint[routeNo][point]+freight.pickUpToPoint[routeNo][point+1]
             if (reroutePickUp<2*K[routeNo].initialRoute.distanceBetween[point]):
-                possibility.append(freight.pickUpCoordinate)
+                possibility.append(i)
+                #possibility.append(Btemp)
+                #possibility.append(freight.pickUpCoordinate)
     return possibility
 
 def listAllPossibleDrop(routeNo, point):
     possibility=[]
+    i=-1
     for freight in FrList.list:
+        i+=1
         if(point<len(K[routeNo].initialRoute.points)-1):
             rerouteDrop=freight.dropToPoint[routeNo][point]+freight.dropToPoint[routeNo][point+1]
             if (rerouteDrop < 2*K[routeNo].initialRoute.distanceBetween[point]):
-                possibility.append(freight.dropCoordinate)
+                possibility.append(i)
+                #possibility.append(freight.dropCoordinate)
     return possibility
+
+def findDropPoint(routeNo, currentPoint, FreightList):
+    result=[]
+    for i in FreightList:
+        #temp = [i]
+        temp = ["B"+str(i)]
+        dropPoint = []
+        freight=FrList.list[i]
+        for point in range(currentPoint+1, len(K[routeNo].initialRoute.points)):
+            if (point < len(K[routeNo].initialRoute.points) - 1):
+                rerouteDrop = freight.dropToPoint[routeNo][point] + freight.dropToPoint[routeNo][point + 1]
+                if (rerouteDrop < 2 * K[routeNo].initialRoute.distanceBetween[point]):
+                    #dropPoint.append(point)
+                    dropPoint.append('E'+str(point))
+            else:
+                #dropPoint.append(point)
+                dropPoint.append('E' + str(point))
+        result.append(list(itertools.product(temp,dropPoint)))
+        #print(dropPoint)
+    return result
 
 def isDropPossible(routeNo, point, pickUpPoint):
     possibility=False
@@ -250,38 +278,67 @@ def isDropPossible(routeNo, point, pickUpPoint):
         possibility=True
     return possibility
 
+def product(List1,List2):
+    temp=list(itertools.repeat(List1,len(List2)))
+    for i in range(len(List2)):
+        if (i==0):
+            List1.append(i)
+        else:
+            List1.append(temp)
+            List1[-1].append(i)
+    print(List1)
+    return List1
+
 def listAllPossiblePickUpDrop():
     possiblePickUp=[]
     possibleDrop=[]
     for i in range(totalRoute):
-#        K[i].addPossibleRoute()
-        K[i].possibleRoute
-        for j in range(len(K[i].initialRoute.points)):
-            #freightList = FrList.list.pickUpCoordinate
+        possibleRoute=[]
+        print('route: ',i)
+        Rtemp='R'+str(i)
+        for j in range(len(K[i].initialRoute.points)-1):
+            Ptemp = 'P'+str(j)
+            if (possibleRoute==[]):
+                possibleRoute.append(tuple([Ptemp]))
+            print('  point: ', j)
             pickUpList = listAllPossiblePickUp(i,j)
-            dropList = listAllPossibleDrop(i,j)
-            print(pickUpList)
-            print(dropList)
-            print('--')
-            #while(len(pickUpList)!=0):
-            #    print(pickUpList[0])
-            #    pickUpList.pop(0)
-
-            #print('route:',i,' point:',j)
-            #for freight in FrList.list:
-            #    if(j<len(K[i].initialRoute.points)-1):
-            #        reroutePickUp= freight.pickUpToPoint[i][j]+freight.pickUpToPoint[i][j+1]
-            #        if(reroutePickUp < 2*K[i].initialRoute.distanceBetween[j]):
-            #            possiblePickUp.append([i,j,freight.pickUpCoordinate])
-            #            print('pickup:',freight.pickUpCoordinate)
-            #        rerouteDrop = freight.dropToPoint[i][j] + freight.dropToPoint[i][j + 1]
-            #        if (rerouteDrop < 2 * K[i].initialRoute.distanceBetween[j]):
-            #            possibleDrop.append([i,j,freight.dropCoordinate])
-            #    else:
-            #        possibleDrop.append([i, j, freight.dropCoordinate])
-    print(possiblePickUp)
-    print('-')
-    print(possibleDrop)
+            if (pickUpList!=[]):
+                findDP = findDropPoint(i,j,pickUpList)
+                print('   PICKUP : ',pickUpList)
+                a = []
+                for route in possibleRoute:
+                    if(route[-1][0]=='P'):
+                        a.append(1)
+                    else:
+                        a.append(0)
+                temp = tuple(itertools.compress(possibleRoute,a))
+                for frNo in findDP:
+                    prod=list(itertools.product(temp,frNo))
+                    for res in prod:
+                        result=tuple(itertools.chain.from_iterable(res))
+                        possibleRoute=possibleRoute[:-1]+[result]+possibleRoute[-1:]
+            count = -1
+            for app in possibleRoute:
+                count+=1
+                temp=tuple(['P'+str(j+1)])
+                if(app[-1][0]!='E'):
+                    possibleRoute[count]=app+temp
+                else:
+                    idx = int(app[-1][1:])
+                    if(j+1<idx):
+                        possibleRoute[count]=app[:-1]+temp+app[-1:]
+                    else:
+                        # last=app[-1]
+                        bar=list(app)
+                        bar.reverse()
+                        for foo in bar:
+                            if (foo[0] == 'B'):
+                                last = (foo[1:])
+                                break
+                        possibleRoute[count]=app[0:-1]+temp+tuple(['D'+last])
+            for app in possibleRoute:
+                print(app)
+        print('--')
 readCSV('./data_small2.csv')
 readParameter()
 K = [CAR() for i in range(totalRoute)]
