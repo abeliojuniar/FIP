@@ -68,6 +68,10 @@ class FREIGHT(object):
         self.actualDrop = TIMEFORMAT()
         self.pickUpToPoint=[]
         self.dropToPoint=[]
+        self.pickUpCost=[]
+        self.dropCost=[]
+        self.pickTimeCost=[]
+        self.dropTimeCost=[]
         self.isPickedUp = 0
 
     def addPickUpCoordinate(self, x, y):
@@ -208,16 +212,30 @@ def calculateFreightToPoint():
     for list in FrList.list:
         list.pickUpToPoint=[[] for i in range(totalRoute)]
         list.dropToPoint=[[] for i in range(totalRoute)]
+        list.pickUpCost=[[] for i in range(totalRoute)]
+        list.dropCost=[[] for i in range(totalRoute)]
+        list.pickTimeCost=[[] for i in range(totalRoute)]
+        list.dropTimeCost=[[] for i in range(totalRoute)]
     for freight in FrList.list:
         for i in range(totalRoute):
             for points in K[i].initialRoute.points:
                 freight.pickUpToPoint[i].append(distForm(freight.pickUpCoordinate.coord,points.coord))
                 freight.dropToPoint[i].append(distForm(freight.dropCoordinate.coord,points.coord))
+            for j in range(len(K[i].initialRoute.points)):
+                if(j<len(K[i].initialRoute.points)-1):
+                    freight.pickUpCost[i].append(freight.pickUpToPoint[i][j]+freight.pickUpToPoint[i][j+1]-K[i].initialRoute.distanceBetween[j])
+                    freight.dropCost[i].append(freight.dropToPoint[i][j]+freight.dropToPoint[i][j+1]-K[i].initialRoute.distanceBetween[j])
+                    freight.pickTimeCost[i].append((freight.pickUpToPoint[i][j]+freight.pickUpToPoint[i][j+1])/(K[i].initialRoute.distanceBetween[j]))
+                    freight.dropTimeCost[i].append((freight.dropToPoint[i][j]+freight.dropToPoint[i][j+1])/(K[i].initialRoute.distanceBetween[j]))
+                else:
+                    freight.pickUpCost[i].append(freight.pickUpToPoint[i][j])
+                    freight.dropCost[i].append(freight.dropToPoint[i][j])
+                    freight.pickTimeCost[i].append(0)
+                    freight.dropTimeCost[i].append(0)
 
 def calculateDistanceBetween():
     for i in range(totalRoute):
         K[i].initialRoute.calculateDistanceBetween()
-        #print(list(itertools.permutations([1,2,3])))
 
 def listAllPossiblePickUp(routeNo, point):
     possibility=[]
@@ -289,9 +307,8 @@ def product(List1,List2):
     print(List1)
     return List1
 
-def listAllPossiblePickUpDrop():
-    possiblePickUp=[]
-    possibleDrop=[]
+def listAllPossibleRoute():
+    allPossibleRoute=[]
     for i in range(totalRoute):
         possibleRoute=[]
         print('route: ',i)
@@ -336,9 +353,108 @@ def listAllPossiblePickUpDrop():
                                 last = (foo[1:])
                                 break
                         possibleRoute[count]=app[0:-1]+temp+tuple(['D'+last])
-            for app in possibleRoute:
-                print(app)
+                        # for app in possibleRoute:
+                        #     print(app)
         print('--')
+        allPossibleRoute.append(possibleRoute[:-1])
+    allPossibleRoute=(list(itertools.product(*allPossibleRoute)))
+    return allPossibleRoute
+
+def isRouteValid(route):
+    res=[]
+    for foo in route:
+        for bar in foo:
+            if(bar[0]=='B'):
+                res.append(int(bar[1:]))
+    if(len(res)==len(list(set(res)))):
+        return 1
+    else:
+        return 0
+
+def generateValidRoutes(allPossibleRoute):
+    valid=[]
+    for route in allPossibleRoute:
+        valid.append(isRouteValid(route))
+    return (list(itertools.compress(allPossibleRoute,valid)))
+
+def calculateProfit(route):
+    #State : 0=START, 1=Freight doesnt exist, 2=Freight exist
+    sumProfit=0
+    for routeNo in range(len(route)):
+        state = 0
+        prev = None
+        freightPicked=None
+        rerouteCost = 0
+        distanceToDrop = 0
+        timeCost = 0
+        for input in route[routeNo]:
+            if(state==0):
+                if(input[0]=='P'):
+                    state=1
+                    prev=input
+                else:
+                    print('route invalid')
+            elif (state == 1):
+                if (input[0] == 'B'):
+                    state = 2
+                    freightPicked = int(input[1:])
+                    rerouteCost += FrList.list[int(input[1:])].pickUpCost[routeNo][int(prev[1:])]
+                    if (prev[0] == 'P' and int(prev[1:]) % 2 == 0):
+                        timeCost += FrList.list[int(input[1:])].pickTimeCost[routeNo][int(prev[1:])] - 1
+                    prev = input
+                else:
+                    prev = input
+            elif(state==2):
+                if(input[0]=='D'):
+                    state=1
+                    rerouteCost += FrList.list[freightPicked].dropCost[routeNo][int(prev[1:])]
+                    distanceToDrop += FrList.list[freightPicked].dropToPoint[routeNo][int(prev[1:])]
+                    if (prev[0] == 'P' and int(prev[1:])% 2 == 0):
+                        timeCost += FrList.list[freightPicked].dropTimeCost[routeNo][int(prev[1:])] - 1
+                    sumProfit+=beta+gamma2*distanceToDrop-gamma3*rerouteCost-gamma4*timeCost
+                    rerouteCost=0
+                    distanceToDrop=0
+                    timeCost=0
+                    prev = input
+                else:
+                    if(prev[0]=='B'):
+                        distanceToDrop+=FrList.list[freightPicked].pickUpToPoint[routeNo][int(input[1:])]
+                    elif(prev[0]=='P'):
+                        distanceToDrop+=K[routeNo].initialRoute.distanceBetween[int(prev[1:])]
+                    prev = input
+    return sumProfit
+
+def getMaxProfit(allValidRoute):
+    max=0
+    count=-1
+    for validRoute in allValidRoute:
+        count+=1
+        profit=calculateProfit(validRoute)
+        if(profit>max):
+            max=profit
+            index=count
+    return max,allValidRoute[index]
+
+def getRouteCoordinate(route):
+    newRoute=[[] for i in range(len(route))]
+    for routeNo in range(len(route)):
+        count = -1
+        for point in route[routeNo]:
+            count+=1
+            if(point[0]=='P'):
+                newRoute[routeNo].append(K[routeNo].initialRoute.points[int(point[1:])])
+            elif(point[0]=='B'):
+                newRoute[routeNo].append(FrList.list[int(point[1:])].pickUpCoordinate)
+            elif(point[0]=='D'):
+                newRoute[routeNo].append(FrList.list[int(point[1:])].dropCoordinate)
+    return newRoute
+
+def plotMaxRoute(route):
+    for r in route:
+        # print(r)
+        # print(r[0])
+        maxline, = plt.plot([r[j].x for j in range(len(r))], [r[j].y for j in range(len(r))], 'y--')
+
 readCSV('./data_small2.csv')
 readParameter()
 K = [CAR() for i in range(totalRoute)]
@@ -348,7 +464,11 @@ fig, ax = plt.subplots()
 plt.axis([-25,25,-25,25])
 plotInitialRoute()
 plotFreight()
-calculateFreightToPoint()
 calculateDistanceBetween()
-listAllPossiblePickUpDrop()
+calculateFreightToPoint()
+allPossibleRoute=listAllPossibleRoute()
+allValidRoute=generateValidRoutes(allPossibleRoute)
+maxProfit,maxRoute=getMaxProfit(allValidRoute)
+maxRoute=getRouteCoordinate(maxRoute)
+plotMaxRoute(maxRoute)
 plt.show()
