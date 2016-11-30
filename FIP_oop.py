@@ -45,8 +45,8 @@ class PASSENGER(object):
     def __init__(self):
         self.pickUpCoordinate = COORDINATE(None, None)
         self.dropCoordinate = COORDINATE(None, None)
-        self.pickUpWindow = TIMEFORMAT()
-        self.dropWindow = TIMEFORMAT()
+        self.pickUpWindow = []
+        self.dropWindow = []
         self.actualPickUp = TIMEFORMAT()
         self.actualDrop = TIMEFORMAT()
 
@@ -62,8 +62,8 @@ class FREIGHT(object):
     def __init__(self):
         self.pickUpCoordinate = COORDINATE(None, None)
         self.dropCoordinate = COORDINATE(None, None)
-        self.pickUpWindow = TIMEFORMAT()
-        self.dropWindow = TIMEFORMAT()
+        self.pickUpWindow = []
+        self.dropWindow = []
         self.actualPickUp = TIMEFORMAT()
         self.actualDrop = TIMEFORMAT()
         self.pickUpToPoint=[]
@@ -182,10 +182,18 @@ def assignPassenger():
             K[foundRoute].initialRoute.passenger[foundPas].addPickUpCoordinate(float(column[i][1]), float(column[i][2]))
             K[foundRoute].initialRoute.passenger[foundPas].addDropCoordinate(float(column[i][3]), float(column[i][4]))
             K[foundRoute].totalPassenger=foundPas+1
+            K[foundRoute].initialRoute.passenger[foundPas].pickUpWindow.append(int(column[i][5].split(':')[0])*60+int(column[i][5].split(':')[1]))
+            K[foundRoute].initialRoute.passenger[foundPas].pickUpWindow.append(int(column[i][6].split(':')[0])*60+int(column[i][6].split(':')[1]))
+            K[foundRoute].initialRoute.passenger[foundPas].dropWindow.append(int(column[i][7].split(':')[0])*60+int(column[i][7].split(':')[1]))
+            K[foundRoute].initialRoute.passenger[foundPas].dropWindow.append(int(column[i][8].split(':')[0])*60+int(column[i][8].split(':')[1]))
         elif (column[i][0] == 'Freight'):
             FrList.addFreight()
             FrList.list[-1].addPickUpCoordinate(float(column[i][1]), float(column[i][2]))
             FrList.list[-1].addDropCoordinate(float(column[i][3]), float(column[i][4]))
+            FrList.list[-1].pickUpWindow.append(int(column[i][5].split(':')[0]) * 60 + int(column[i][5].split(':')[1]))
+            FrList.list[-1].pickUpWindow.append(int(column[i][6].split(':')[0]) * 60 + int(column[i][6].split(':')[1]))
+            FrList.list[-1].dropWindow.append(int(column[i][7].split(':')[0]) * 60 + int(column[i][7].split(':')[1]))
+            FrList.list[-1].dropWindow.append(int(column[i][8].split(':')[0]) * 60 + int(column[i][8].split(':')[1]))
 
 def plotInitialRoute():
     for i in range(totalRoute):
@@ -377,6 +385,97 @@ def generateValidRoutes(allPossibleRoute):
         valid.append(isRouteValid(route))
     return (list(itertools.compress(allPossibleRoute,valid)))
 
+def checkTimingWindow(route):
+    for routeNo in range(len(route)):
+        prev = 'A0'
+        strt = int(startTime[0])*60 + int(startTime[1])
+        timePoint=[strt]
+        count=-1
+        for input in route[routeNo]:
+            count+=1
+            if(input[0]=='P' and prev[0]=='P'):
+                distance=K[routeNo].initialRoute.distanceBetween[int(prev[1:])]
+            elif(input[0]=='B' and prev[0]=='P'):
+                distance=FrList.list[int(input[1:])].pickUpToPoint[routeNo][int(prev[1:])]
+            elif(input[0]=='P' and prev[0]=='B'):
+                distance=FrList.list[int(prev[1:])].pickUpToPoint[routeNo][int(input[1:])]
+            elif(input[0]=='D' and prev[0]=='P'):
+                distance=FrList.list[int(input[1:])].dropToPoint[routeNo][int(prev[1:])]
+            elif(input[0]=='P' and prev[0]=='D'):
+                distance=FrList.list[int(prev[1:])].dropToPoint[routeNo][int(input[1:])]
+            if(count!=0):
+                timePoint.append(mat.floor(distance*60/Vavg) + timePoint[-1])
+                if(input[0]=='P'):
+                    if(int(input[1:])%2==0):
+                        earlyPickUp = K[routeNo].initialRoute.passenger[mat.floor(int(input[1:]) / 2)].pickUpWindow[0]
+                        latePickUp = K[routeNo].initialRoute.passenger[mat.floor(int(input[1:]) / 2)].pickUpWindow[1]
+                        # print('pu',timePoint[-1],earlyPickUp,latePickUp)
+                        if(not(timePoint[-1]>=earlyPickUp and timePoint[-1]<=latePickUp)):
+                            return 0
+                            # print(input, 'not meet')
+                        # else:
+                        #     print(input,'meet')
+                    elif(int(input[1:])%2==1):
+                        earlyDrop = K[routeNo].initialRoute.passenger[mat.floor(int(input[1:]) / 2)].dropWindow[0]
+                        lateDrop = K[routeNo].initialRoute.passenger[mat.floor(int(input[1:]) / 2)].dropWindow[1]
+                        # print('d',timePoint[-1], earlyDrop, lateDrop)
+                        if (not(timePoint[-1] >= earlyDrop and timePoint[-1] <= lateDrop)):
+                            return 0
+                            # print(input, 'not meet')
+                        # else:
+                        #     print(input, 'meet')
+                elif(input[0]=='B'):
+                    earlyPickUp = FrList.list[int(input[1:])].pickUpWindow[0]
+                    latePickUp = FrList.list[int(input[1:])].pickUpWindow[1]
+                    if (not(timePoint[-1] >= earlyPickUp and timePoint[-1] <= latePickUp)):
+                        return 0
+                        # print(input, 'not meet')
+                    # else:
+                    #     print(input, 'meet')
+                elif (input[0] == 'D'):
+                    earlyDrop = FrList.list[int(input[1:])].dropWindow[0]
+                    lateDrop = FrList.list[int(input[1:])].dropWindow[1]
+                    if (not(timePoint[-1] >= earlyDrop and timePoint[-1] <= lateDrop)):
+                        return 0
+                        # print(input, 'not meet')
+                    # else:
+                    #     print(input, 'meet')
+            prev = input
+    return 1
+
+def printTimePoint (route):
+    for routeNo in range(len(route)):
+        prev = 'A0'
+        strt = int(startTime[0])*60 + int(startTime[1])
+        timePoint=[strt]
+        count=-1
+        for input in route[routeNo]:
+            count+=1
+            if(input[0]=='P' and prev[0]=='P'):
+                distance=K[routeNo].initialRoute.distanceBetween[int(prev[1:])]
+            elif(input[0]=='B' and prev[0]=='P'):
+                distance=FrList.list[int(input[1:])].pickUpToPoint[routeNo][int(prev[1:])]
+            elif(input[0]=='P' and prev[0]=='B'):
+                distance=FrList.list[int(prev[1:])].pickUpToPoint[routeNo][int(input[1:])]
+            elif(input[0]=='D' and prev[0]=='P'):
+                distance=FrList.list[int(input[1:])].dropToPoint[routeNo][int(prev[1:])]
+            elif(input[0]=='P' and prev[0]=='D'):
+                distance=FrList.list[int(prev[1:])].dropToPoint[routeNo][int(input[1:])]
+            if(count!=0):
+                timePoint.append(mat.floor(distance*60/Vavg) + timePoint[-1])
+                print(input,mat.floor(timePoint[-1]/60),':',timePoint[-1]%60)
+            else:
+                print('POINT 0')
+            prev = input
+
+def checkAllTimingWindow(allRoute):
+    buffer=[]
+    newRoute=[]
+    for route in allRoute:
+        if (checkTimingWindow(route)):
+            newRoute.append(route)
+    return newRoute
+
 def calculateProfit(route):
     #State : 0=START, 1=Freight doesnt exist, 2=Freight exist
     sumProfit=0
@@ -387,6 +486,7 @@ def calculateProfit(route):
         rerouteCost = 0
         distanceToDrop = 0
         timeCost = 0
+        # timePoint=[]
         for input in route[routeNo]:
             if(state==0):
                 if(input[0]=='P'):
@@ -399,6 +499,7 @@ def calculateProfit(route):
                     state = 2
                     freightPicked = int(input[1:])
                     rerouteCost += FrList.list[int(input[1:])].pickUpCost[routeNo][int(prev[1:])]
+                    # timePoint.append(FrList.list[int(input[1:])].pickUpToPoint[routeNo][int(prev[1:])])
                     if (prev[0] == 'P' and int(prev[1:]) % 2 == 0):
                         timeCost += FrList.list[int(input[1:])].pickTimeCost[routeNo][int(prev[1:])] - 1
                     prev = input
@@ -468,7 +569,12 @@ calculateDistanceBetween()
 calculateFreightToPoint()
 allPossibleRoute=listAllPossibleRoute()
 allValidRoute=generateValidRoutes(allPossibleRoute)
-maxProfit,maxRoute=getMaxProfit(allValidRoute)
+checkTimingRoute = checkAllTimingWindow(allValidRoute)
+maxProfit,maxRoute=getMaxProfit(checkTimingRoute)
+# print(maxRoute)
+printTimePoint(maxRoute)
+print('MAXIMUM PROFIT = ',maxProfit)
+print('MAXIMUM ROUTE = ',maxRoute)
 maxRoute=getRouteCoordinate(maxRoute)
 plotMaxRoute(maxRoute)
 plt.show()
